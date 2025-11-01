@@ -1,4 +1,3 @@
-import re
 import os, secrets, httpx, base64
 from fastapi import APIRouter, Request, Response, HTTPException
 from urllib.parse import urlencode

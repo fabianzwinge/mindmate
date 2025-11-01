@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from routers.auth_router import router as auth_router
+from routers.chat_router import router as chat_router
 
 
 app = FastAPI(host="0.0.0.0", port=8000)
@@ -20,6 +21,7 @@ app.add_middleware(
     same_site="lax"
 )
 app.include_router(auth_router)
+app.include_router(chat_router)
 
 @app.get("/api/hello")
 def read_root():
