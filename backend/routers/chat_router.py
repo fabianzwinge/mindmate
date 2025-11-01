@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
 from services.sentiment_service import SentimentService
-from backend.services.ai_service import AIService
+from services.ai_service import AIService
 
 router = APIRouter()
 

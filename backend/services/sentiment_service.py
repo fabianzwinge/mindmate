@@ -12,7 +12,7 @@ class SentimentService:
         
         try:
             return {
-                "sentiment": SentimentType.POSITIVE.value, #Placeeholder - always positive for now
+                "sentiment": SentimentType.POSITIVE.value, #Placeholder - always positive for now
                 "confidence": 0.9
             }
             

@@ -5,7 +5,7 @@ import random
 
 load_dotenv()
 
-class GPTService:
+class AIService:
     def __init__(self):
         # Für jetzt nur lokale Antworten verwenden
         self.model = None
@@ -37,5 +37,5 @@ class GPTService:
             ]
         }
 
-        responses = fallback_responses.get(sentiment, fallback_responses["positive"]) #Placehoder - always positive for now
+        responses = fallback_responses.get(sentiment, fallback_responses["gut"]) #Placehoder - always positive for now
         return random.choice(responses)
