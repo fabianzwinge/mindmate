@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from routers.auth_router import router as auth_router
+from routers.spotify_router import router as spotify_router
 from routers.chat_router import router as chat_router
 
 
@@ -20,8 +20,9 @@ app.add_middleware(
     secret_key=os.getenv("SESSION_SECRET"), 
     same_site="lax"
 )
-app.include_router(auth_router)
+
 app.include_router(chat_router)
+app.include_router(spotify_router)
 
 @app.get("/api/hello")
 def read_root():
