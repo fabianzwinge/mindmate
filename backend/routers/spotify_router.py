@@ -1,81 +1,165 @@
-import os, secrets, httpx, base64
-from fastapi import APIRouter, Request, Response, HTTPException
-from urllib.parse import urlencode
-from dotenv import load_dotenv
+import os
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import RedirectResponse, HTMLResponse
+from pydantic import BaseModel
+from services.spotify_service import SpotifyService
+from typing import Dict, Any
+import logging
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
-SESSION_SECRET = os.getenv("SESSION_SECRET", secrets.token_urlsafe(32))
+router = APIRouter(prefix="/api/spotify")
 
-SPOTIFY_AUTH = "https://accounts.spotify.com/authorize?"
-SPOTIFY_TOKEN= "https://accounts.spotify.com/api/token"
-SPOTIFY_ME= "https://api.spotify.com/v1/me"
+class PlaylistRequest(BaseModel):
+    mood: str
+    tracks_count: int = 20
 
-router = APIRouter()
+spotify_service = SpotifyService()
 
-STATE_KEY = "spotify_auth_state"
+def get_frontend_url() -> str:
+    """Get frontend URL based on environment"""
+    return os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-@router.get("/login")
-async def login(request: Request):
-    state = secrets.token_urlsafe(16)
-    request.session[STATE_KEY] = state
-    params = {
-        "response_type": "code",
-        "client_id": SPOTIFY_CLIENT_ID,
-        "scope": "user-read-email user-read-private playlist-modify-private playlist-modify-public",
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
-        "state": state,
-        "show_dialog": "true"
-    }
+def get_spotify_tokens(request: Request) -> Dict[str, str]:
+    """Holt Spotify-Tokens aus der Session"""
+    access_token = request.session.get("spotify_access_token")
+    refresh_token = request.session.get("spotify_refresh_token")
     
-    return Response(status_code=302, headers={"Location": f"{SPOTIFY_AUTH}{urlencode(params)}"})
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated with Spotify")
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
+
+def refresh_token_if_needed(request: Request, tokens: Dict[str, str]) -> str:
+    """Erneuert Token falls nötig und gibt gültigen Access Token zurück"""
+    try:
+        # Test if token is still valid
+        spotify_service.get_user_profile(tokens["access_token"])
+        return tokens["access_token"]
+    except HTTPException:
+        # Token expired, try refresh
+        if not tokens.get("refresh_token"):
+            logger.warning("Access token expired and no refresh token available")
+            raise HTTPException(status_code=401, detail="Token expired and no refresh token available")
+        
+        try:
+            logger.info("Refreshing access token")
+            new_tokens = spotify_service.refresh_access_token(tokens["refresh_token"])
+            request.session["spotify_access_token"] = new_tokens["access_token"]
+
+            if "refresh_token" in new_tokens:
+                request.session["spotify_refresh_token"] = new_tokens["refresh_token"]
+            
+            return new_tokens["access_token"]
+        except Exception as e:
+            logger.error(f"Failed to refresh token: {e}")
+            raise HTTPException(status_code=401, detail="Failed to refresh token")
+
+@router.post("/generatePlaylist")
+async def generate_playlist(playlist_request: PlaylistRequest, request: Request):
+    """
+    Generiert eine Spotify-Playlist. 
+    Handhabt automatisch Authentifizierung und Token-Refresh.
+    """
+    try:
+        logger.info(f"Generating playlist for mood: {playlist_request.mood}")
+        
+        # Versuche Tokens zu holen
+        try:
+            tokens = get_spotify_tokens(request)
+            access_token = refresh_token_if_needed(request, tokens)
+        except HTTPException as e:
+            if e.status_code == 401:
+        
+                auth_url = spotify_service.get_auth_url()
+                logger.info("User not authenticated, opening Spotify login popup")
+                
+                request.session["pending_playlist_request"] = {
+                    "mood": playlist_request.mood,
+                    "tracks_count": playlist_request.tracks_count
+                }
+                
+                return {
+                    "action": "open_popup",
+                    "popup_url": auth_url,
+                    "message": "Spotify-Authentifizierung erforderlich"
+                }
+            raise e
+    
+        user_profile = spotify_service.get_user_profile(access_token)
+        user_id = user_profile["id"]
+        
+        result = spotify_service.generate_playlist_from_mood(
+            access_token,
+            user_id,
+            playlist_request.mood,
+            playlist_request.tracks_count
+        )
+        
+        logger.info(f"Successfully created playlist: {result['playlist']['name']}")
+        
+        return {
+            "action": "playlist_created",
+            "success": True,
+            "playlist_name": result["playlist"]["name"],
+            "playlist_url": result["playlist_url"],
+            "tracks_added": result["tracks_added"],
+            "message": f"Playlist '{result['playlist']['name']}' wurde erfolgreich erstellt!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating playlist: {e}")
+        return {
+            "action": "error",
+            "success": False,
+            "error": str(e),
+            "message": f"Fehler beim Erstellen der Playlist: {str(e)}"
+        }
 
 @router.get("/callback")
-async def callback(request: Request, code: str | None = None, state: str | None = None):
-    if not code or not state:
-        raise HTTPException(400, "missing code or state")
-    if state != request.session.get(STATE_KEY):
-        raise HTTPException(400, "invalid state")
-    request.session.pop(STATE_KEY, None)
+async def spotify_callback(code: str, request: Request):
+    """
+    Callback für Spotify-Authentifizierung.
+    Schließt das Popup automatisch nach erfolgreicher Authentifizierung.
+    """
+    try:
+        logger.info("Processing Spotify callback")
+        
+        tokens = spotify_service.exchange_code_for_token(code)
+        request.session["spotify_access_token"] = tokens["access_token"]
 
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI
-    }
+        if "refresh_token" in tokens:
+            request.session["spotify_refresh_token"] = tokens["refresh_token"]
+        
+        logger.info("Successfully authenticated with Spotify")
+        
+        return HTMLResponse(content="""
+        <html>
+        <head><title>Authentifizierung erfolgreich</title></head>
+        <body>
+        <script>
+        // Popup sofort schließen ohne Wartezeit
+        window.close();
+        </script>
+        </body>
+        </html>
+        """)
+        
+    except Exception as e:
+        logger.error(f"Spotify callback error: {e}")
+        
+        return HTMLResponse(content=f"""
+        <html>
+        <head><title>Authentifizierungsfehler</title></head>
+        <body>
+        <script>
+        window.close();
+        </script>
+        <p>Authentifizierungsfehler: {str(e)}</p>
+        </body>
+        </html>
+        """)
 
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": f"Basic {base64.b64encode(f'{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}'.encode()).decode()}"
-    }
-
-    async with httpx.AsyncClient() as c:
-        res = await c.post(SPOTIFY_TOKEN, data=data, headers=headers)
-    if res.status_code != 200:
-        raise HTTPException(400, f"token exchange failed: {res.text}")
-    
-    access_token = res.json()["access_token"]
-
-    request.session["access_token"] = access_token
-
-    return Response(status_code=302, headers={"Location": "http://127.0.0.1:3000/"}) 
-
-@router.get("/playlists")
-async def get_playlists(request: Request):
-    access_token = request.session.get("access_token")
-    if not access_token:
-        raise HTTPException(401, "not authenticated")
-
-    url = "https://api.spotify.com/v1/me/playlists"
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    async with httpx.AsyncClient() as c:
-        r = await c.get(url, headers=headers)
-
-    if r.status_code != 200:
-        raise HTTPException(r.status_code, r.text)
-
-    return Response(content=r.text, media_type="application/json")

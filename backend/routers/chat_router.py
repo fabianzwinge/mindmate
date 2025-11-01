@@ -4,7 +4,7 @@ from typing import Dict, Any
 from services.sentiment_service import SentimentService
 from services.ai_service import AIService
 
-router = APIRouter()
+router = APIRouter(prefix="/api/chat")
 
 class ChatMessage(BaseModel):
     message: str
@@ -17,7 +17,7 @@ class ChatResponse(BaseModel):
 sentiment_service = SentimentService()
 ai_service = AIService()
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/sentiment", response_model=ChatResponse)
 async def process_message(chat_message: ChatMessage) -> ChatResponse:
   
     try:
