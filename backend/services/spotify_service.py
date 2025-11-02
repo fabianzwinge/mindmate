@@ -24,7 +24,7 @@ class SpotifyService:
             raise ValueError("Spotify CLIENT_ID and CLIENT_SECRET must be set")
         
     def get_auth_url(self) -> str:
-        scopes = "playlist-modify-public playlist-modify-private user-read-private"
+        scopes = "playlist-modify-public playlist-modify-private user-read-private ugc-image-upload"
         auth_url = (
             f"https://accounts.spotify.com/authorize?"
             f"client_id={self.client_id}&"
@@ -163,6 +163,42 @@ class SpotifyService:
         
         return True
     
+    def set_playlist_cover(self, access_token: str, playlist_id: str, image_base64: str) -> bool:
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "image/jpeg"
+        }
+        
+        try:
+            response = requests.put(
+                f"{self.base_url}/playlists/{playlist_id}/images",
+                headers=headers,
+                data=image_base64,
+                timeout=10
+            )
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            return False
+    
+    def get_mindmate_cover_base64(self) -> Optional[str]:
+        try:
+            image_path = os.path.join(os.path.dirname(__file__), "img", "mindmate.jpeg")
+            
+            with open(image_path, "rb") as image_file:
+                image_data = image_file.read()
+                
+                if len(image_data) > 256 * 1024:
+                    logger.warning(f"Image is too large (max 256KB)")
+                    return None
+                
+                base64_string = base64.b64encode(image_data).decode('utf-8')
+                return base64_string
+                
+        except Exception as e:
+            logger.error(f"Failed to load MindMate image: {e}")
+            return None
+    
     def generate_playlist_from_mood(self, access_token: str, user_id: str, mood: str, tracks_count: int = 20) -> Dict:
         mood_queries = {
             "gut": ["happy music", "upbeat songs", "positive vibes", "feel good", "energetic", "uplifting"],
@@ -182,7 +218,6 @@ class SpotifyService:
                 logger.warning(f"Failed to search for '{query}': {e}")
                 continue
         
-        # Remove duplicates and limit
         seen_ids = set()
         unique_tracks = []
         for track in all_tracks:
@@ -194,8 +229,8 @@ class SpotifyService:
         
         # Create playlist
         mood_names = {"gut": "good", "schlecht": "bad", "neutral": "neutral"}
-        playlist_name = f"MindMate {mood_names.get(mood).capitalize()} Mood"
-        playlist_description = f"Your MindMate playlist for your {mood_names.get(mood)} mood."
+        playlist_name = f"MindMate {mood_names.get(mood, 'neutral').capitalize()} Mood"
+        playlist_description = f"Your MindMate playlist for your {mood_names.get(mood, 'neutral')} mood."
         
         playlist = self.create_playlist(access_token, user_id, playlist_name, playlist_description)
         
@@ -205,6 +240,18 @@ class SpotifyService:
         
         if not success:
             logger.warning("Some tracks may not have been added to the playlist")
+        
+        # Set playlist cover 
+        try:
+            mindmate_image_base64 = self.get_mindmate_cover_base64()
+            if mindmate_image_base64:
+                cover_success = self.set_playlist_cover(access_token, playlist["id"], mindmate_image_base64)
+                if cover_success:
+                    logger.info("MindMate image set as playlist cover")
+                else:
+                    logger.warning("Failed to set playlist cover")
+        except Exception as e:
+            logger.error(f"Error setting playlist cover: {e}")
         
         return {
             "playlist": playlist,

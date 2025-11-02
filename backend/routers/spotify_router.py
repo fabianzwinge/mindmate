@@ -16,12 +16,7 @@ class PlaylistRequest(BaseModel):
 
 spotify_service = SpotifyService()
 
-def get_frontend_url() -> str:
-    """Get frontend URL based on environment"""
-    return os.getenv("FRONTEND_URL", "http://localhost:3000")
-
 def get_spotify_tokens(request: Request) -> Dict[str, str]:
-    """Holt Spotify-Tokens aus der Session"""
     access_token = request.session.get("spotify_access_token")
     refresh_token = request.session.get("spotify_refresh_token")
     
@@ -34,7 +29,6 @@ def get_spotify_tokens(request: Request) -> Dict[str, str]:
     }
 
 def refresh_token_if_needed(request: Request, tokens: Dict[str, str]) -> str:
-    """Erneuert Token falls nötig und gibt gültigen Access Token zurück"""
     try:
         # Test if token is still valid
         spotify_service.get_user_profile(tokens["access_token"])
@@ -60,10 +54,6 @@ def refresh_token_if_needed(request: Request, tokens: Dict[str, str]) -> str:
 
 @router.post("/generatePlaylist")
 async def generate_playlist(playlist_request: PlaylistRequest, request: Request):
-    """
-    Generiert eine Spotify-Playlist. 
-    Handhabt automatisch Authentifizierung und Token-Refresh.
-    """
     try:
         logger.info(f"Generating playlist for mood: {playlist_request.mood}")
         
@@ -121,10 +111,6 @@ async def generate_playlist(playlist_request: PlaylistRequest, request: Request)
 
 @router.get("/callback")
 async def spotify_callback(code: str, request: Request):
-    """
-    Callback für Spotify-Authentifizierung.
-    Schließt das Popup automatisch nach erfolgreicher Authentifizierung.
-    """
     try:
         logger.info("Processing Spotify callback")
         
