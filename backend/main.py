@@ -10,24 +10,17 @@ load_dotenv()
 
 app = FastAPI()
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:3000")
+ENVIRONMENT = os.getenv("ENVIRONMENT")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+allowed_origins = [FRONTEND_URL]
 
 if ENVIRONMENT == "production":
-    allowed_origins = [FRONTEND_URL]
-    same_site_setting = "none"   
-    https_only = True             
-    secure_flag = True     
+    same_site_setting = "none"  
+    https_only = True            
 else:
-    allowed_origins = [
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000",
-        "http://localhost:8000"
-    ]
-    same_site_setting = "lax"     
-    https_only = False            
-    secure_flag = False    
+    same_site_setting = "lax"    
+    https_only = False           
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,9 +36,8 @@ app.add_middleware(
     secret_key=os.getenv("SESSION_SECRET", "your-super-secret-development-key-12345"),
     session_cookie="mindmate_session", 
     max_age=7 * 24 * 60 * 60,  
-    same_site=same_site_setting,  
-    https_only=https_only,        
-    secure=secure_flag   
+    same_site=same_site_setting, 
+    https_only=https_only   
 )
 
 app.include_router(chat_router)
@@ -57,9 +49,9 @@ def root():
         "message": "MindMate Backend API", 
         "environment": ENVIRONMENT,
         "frontend_url": FRONTEND_URL,
+        "allowed_origins": allowed_origins,
         "cookie_config": {
             "same_site": same_site_setting,
-            "https_only": https_only,
-            "secure": secure_flag
+            "https_only": https_only
         }
     }
