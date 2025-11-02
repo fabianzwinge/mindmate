@@ -6,6 +6,9 @@ import Mascot from '../components/ui/mascot';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { toast } from 'sonner';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 export default function Page() {
   const [messages, setMessages] = useState([
@@ -15,6 +18,8 @@ export default function Page() {
   const [currentMood, setCurrentMood] = useState('neutral');
   const [moodConfidence, setMoodConfidence] = useState(0.0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingPlaylist, setIsGeneratingPlaylist] = useState(false);
+  const [lastPlaylist, setLastPlaylist] = useState(null);
   const endRef = useRef(null);
 
   const moodEmojis = {
@@ -29,6 +34,156 @@ export default function Page() {
     'neutral': '#6b7280'
   };
 
+ 
+  useEffect(() => {
+   
+    const checkPopupClosed = (popup) => {
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          
+          setTimeout(() => {
+            setIsGeneratingPlaylist(true);
+            handleGeneratePlaylistAfterAuth();
+          }, 1500);
+        }
+      }, 1000);
+    };
+  
+    window.checkPopupClosed = checkPopupClosed;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (window.opener) {
+      setTimeout(() => {
+        window.close();
+      }, 500);
+      return;
+    }
+  
+    if (urlParams.get('playlist_created') === 'true') {
+      const playlistName = urlParams.get('playlist_name');
+      const tracksAdded = urlParams.get('tracks_added');
+      const playlistUrl = urlParams.get('playlist_url');
+      
+      console.log('Playlist erfolgreich erstellt:', playlistName);
+      toast.success(`Playlist "${playlistName}" wurde erfolgreich erstellt`);
+      
+      setLastPlaylist({
+        playlist_name: playlistName,
+        playlist_url: playlistUrl,
+        tracks_added: parseInt(tracksAdded)
+      });
+      
+      setIsGeneratingPlaylist(false);
+      
+    } else if (urlParams.get('playlist_error') === 'true') {
+      const errorMessage = urlParams.get('error_message') || 'Unbekannter Fehler';
+      console.log('Fehler beim Erstellen der Playlist:', errorMessage);
+      toast.error(`Fehler beim Erstellen der Playlist: ${errorMessage}`);
+      setIsGeneratingPlaylist(false);
+      
+    } else if (urlParams.get('spotify_auth') === 'success') {
+      console.log('Spotify-Authentifizierung erfolgreich');
+      toast.success('Spotify-Authentifizierung erfolgreich');
+      
+    } else if (urlParams.get('spotify_auth') === 'error') {
+      const errorMessage = urlParams.get('error_message') || 'Unbekannter Fehler';
+      console.log('Spotify-Authentifizierung fehlgeschlagen:', errorMessage);
+      toast.error(`Spotify-Authentifizierung fehlgeschlagen: ${errorMessage}`);
+    }
+   
+    if (urlParams.toString()) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleGeneratePlaylistAfterAuth = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/spotify/generatePlaylist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          mood: currentMood,
+          tracks_count: 20
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📡 Backend response nach Auth:', data);
+
+      if (data.action === 'playlist_created') {
+    
+        setLastPlaylist(data);
+        setIsGeneratingPlaylist(false);
+        console.log('Playlist "' + data.playlist_name + '" wurde erfolgreich erstellt');
+        toast.success(`Playlist "${data.playlist_name}" wurde erfolgreich erstellt`);
+      } 
+      else if (data.action === 'open_popup') {
+        console.log('Authentifizierung fehlgeschlagen');
+        toast.error('Authentifizierung fehlgeschlagen');
+        setIsGeneratingPlaylist(false);
+      }
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Playlist nach Authentifizierung:', error);
+      toast.error('Fehler beim Erstellen der Playlist nach Authentifizierung');
+      setIsGeneratingPlaylist(false);
+    }
+  };
+
+  const handleGeneratePlaylist = async () => {
+    setIsGeneratingPlaylist(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/spotify/generatePlaylist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          mood: currentMood,
+          tracks_count: 20
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.action === 'open_popup') {
+        
+        const popup = window.open(
+          data.popup_url, 
+          'spotify-auth',
+          'width=500,height=600,scrollbars=yes,resizable=yes,centerscreen=yes'
+        );
+        
+        if (popup) {
+          popup.focus();
+          window.checkPopupClosed(popup);
+        }
+        
+      } else if (data.action === 'playlist_created') {
+      
+        setLastPlaylist(data);
+        setIsGeneratingPlaylist(false);
+        console.log('Playlist "' + data.playlist_name + '" wurde erfolgreich erstellt');
+        toast.success(`Playlist "${data.playlist_name}" wurde erfolgreich erstellt`);
+        
+      } 
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Playlist:', error);
+      toast.error('Fehler beim Erstellen der Playlist');
+      setIsGeneratingPlaylist(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -39,7 +194,7 @@ export default function Page() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/sentiment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,9 +313,35 @@ export default function Page() {
                 </div>
               </div>
             </div>
-            <Button className={styles.ctaBtn} variant="outline">
-              Generate Spotify Playlist
+
+            <Button 
+              className={styles.ctaBtn} 
+              variant="outline"
+              onClick={handleGeneratePlaylist}
+              disabled={isGeneratingPlaylist}
+            >
+              {isGeneratingPlaylist ? 'Erstelle Playlist...' : '🎵 Generiere Spotify Playlist'}
             </Button>
+
+            {lastPlaylist && (
+              <div className={styles.lastPlaylist}>
+                <h4>Zuletzt erstellt:</h4>
+                <p>
+                  <strong>{lastPlaylist.playlist_name}</strong>
+                  <br />
+                  {lastPlaylist.tracks_added} Songs hinzugefügt
+                  <br />
+                  <a 
+                    href={lastPlaylist.playlist_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.playlistLink}
+                  >
+                    In Spotify öffnen →
+                  </a>
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
