@@ -14,7 +14,7 @@ class SpotifyService:
         self.client_id = os.getenv("SPOTIFY_CLIENT_ID")
         self.client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
         
-        base_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+        base_url = os.getenv("BACKEND_URL")
         self.redirect_uri = f"{base_url}/api/spotify/callback"
         
         self.base_url = "https://api.spotify.com/v1"
