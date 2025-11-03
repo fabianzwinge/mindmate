@@ -14,9 +14,9 @@ class SpotifyService:
         self.client_id = os.getenv("SPOTIFY_CLIENT_ID")
         self.client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
         
-        base_url = os.getenv("BACKEND_URL")
-        self.redirect_uri = f"{base_url}/api/spotify/callback"
-        
+        backend_url = os.getenv("BACKEND_URL")
+        self.redirect_uri = f"{backend_url}/api/spotify/callback"
+
         self.base_url = "https://api.spotify.com/v1"
         
         if not self.client_id or not self.client_secret:
