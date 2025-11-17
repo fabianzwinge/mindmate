@@ -4,3 +4,6 @@
 > *„Wie geht es dir heute?“*  
 
 Du kannst frei antworten, und die integrierte **Sentiment-Analyse** erkennt automatisch deine Stimmung. Außerdem generiert er dir noch Spotify Playlists die deine Stimmung wiederspiegeln. 
+
+# Prerequisites
+* Python 13.3
