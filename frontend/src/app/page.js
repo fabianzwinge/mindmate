@@ -12,7 +12,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Page() {
   const [messages, setMessages] = useState([
-    { sender: 'system', text: "Hallo, wie geht's dir heute?" }
+    { sender: 'system', text: "Hi there! How are you feeling today? What have you been up to?" }
   ]);
   const [input, setInput] = useState('');
   const [currentMood, setCurrentMood] = useState('neutral');
@@ -23,18 +23,17 @@ export default function Page() {
   const endRef = useRef(null);
 
   const moodEmojis = {
-    'gut': '🙂',
-    'schlecht': '😞',
+    'good': '🙂',
+    'bad': '😞',
     'neutral': '😐'
   };
 
   const moodColors = {
-    'gut': '#22c55e',
-    'schlecht': '#ef4444',
+    'good': '#22c55e',
+    'bad': '#ef4444',
     'neutral': '#6b7280'
   };
 
- 
   useEffect(() => {
    
     const checkPopupClosed = (popup) => {
@@ -66,8 +65,8 @@ export default function Page() {
       const tracksAdded = urlParams.get('tracks_added');
       const playlistUrl = urlParams.get('playlist_url');
       
-      console.log('Playlist erfolgreich erstellt:', playlistName);
-      toast.success(`Playlist "${playlistName}" wurde erfolgreich erstellt`);
+      console.log('Playlist created successfully:', playlistName);
+      toast.success(`Playlist "${playlistName}" was successfully created`);
       
       setLastPlaylist({
         playlist_name: playlistName,
@@ -78,20 +77,20 @@ export default function Page() {
       setIsGeneratingPlaylist(false);
       
     } else if (urlParams.get('playlist_error') === 'true') {
-      const errorMessage = urlParams.get('error_message') || 'Unbekannter Fehler';
-      console.log('Fehler beim Erstellen der Playlist:', errorMessage);
-      toast.error(`Fehler beim Erstellen der Playlist: ${errorMessage}`);
+      const errorMessage = urlParams.get('error_message') || 'Unknown error';
+      console.log('Error creating playlist:', errorMessage);
+      toast.error(`Error creating playlist: ${errorMessage}`);
       setIsGeneratingPlaylist(false);
-      
-    } else if (urlParams.get('spotify_auth') === 'success') {
-      console.log('Spotify-Authentifizierung erfolgreich');
-      toast.success('Spotify-Authentifizierung erfolgreich');
-      
-    } else if (urlParams.get('spotify_auth') === 'error') {
-      const errorMessage = urlParams.get('error_message') || 'Unbekannter Fehler';
-      console.log('Spotify-Authentifizierung fehlgeschlagen:', errorMessage);
-      toast.error(`Spotify-Authentifizierung fehlgeschlagen: ${errorMessage}`);
-    }
+
+        } else if (urlParams.get('spotify_auth') === 'success') {
+      console.log('Spotify authentication successful');
+      toast.success('Spotify authentication successful');
+
+        } else if (urlParams.get('spotify_auth') === 'error') {
+      const errorMessage = urlParams.get('error_message') || 'Unknown error';
+      console.log('Spotify authentication failed:', errorMessage);
+      toast.error(`Spotify authentication failed: ${errorMessage}`);
+        }
    
     if (urlParams.toString()) {
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -117,23 +116,22 @@ export default function Page() {
       }
 
       const data = await response.json();
-      console.log('📡 Backend response nach Auth:', data);
 
       if (data.action === 'playlist_created') {
     
         setLastPlaylist(data);
         setIsGeneratingPlaylist(false);
-        console.log('Playlist "' + data.playlist_name + '" wurde erfolgreich erstellt');
-        toast.success(`Playlist "${data.playlist_name}" wurde erfolgreich erstellt`);
+        console.log('Playlist created successfully:', data.playlist_name);
+        toast.success(`Playlist "${data.playlist_name}" was successfully created`);
       } 
       else if (data.action === 'open_popup') {
-        console.log('Authentifizierung fehlgeschlagen');
-        toast.error('Authentifizierung fehlgeschlagen');
+        console.log('Authentication failed');
+        toast.error('Authentication failed');
         setIsGeneratingPlaylist(false);
       }
     } catch (error) {
-      console.error('Fehler beim Erstellen der Playlist nach Authentifizierung:', error);
-      toast.error('Fehler beim Erstellen der Playlist nach Authentifizierung');
+      console.error('Error creating playlist after authentication:', error);
+      toast.error('Error creating playlist after authentication');
       setIsGeneratingPlaylist(false);
     }
   };
@@ -173,13 +171,12 @@ export default function Page() {
       
         setLastPlaylist(data);
         setIsGeneratingPlaylist(false);
-        console.log('Playlist "' + data.playlist_name + '" wurde erfolgreich erstellt');
-        toast.success(`Playlist "${data.playlist_name}" wurde erfolgreich erstellt`);
-        
+        console.log('Playlist created successfully:', data.playlist_name);
+        toast.success(`Playlist "${data.playlist_name}" was successfully created`);
       } 
     } catch (error) {
-      console.error('Fehler beim Erstellen der Playlist:', error);
-      toast.error('Fehler beim Erstellen der Playlist');
+      console.error('Error creating playlist:', error);
+      toast.error('Error creating playlist');
       setIsGeneratingPlaylist(false);
     }
   };
@@ -220,7 +217,7 @@ export default function Page() {
       console.error('Chat error:', error);
       setMessages((prev) => [...prev, { 
         sender: 'system', 
-        text: 'Entschuldigung, etwas ist schiefgelaufen. Versuche es nochmal.' 
+        text: 'Sorry, something went wrong. Please try again.' 
       }]);
     } finally {
       setIsLoading(false);
@@ -241,7 +238,7 @@ export default function Page() {
           </div>
           <div className={styles.brandText}>
             <h1 className={styles.title}>MindMate</h1>
-            <p className={styles.subtitle}>Dein KI Kumpel</p>
+            <p className={styles.subtitle}>Your AI Buddy</p>
           </div>
         </header>
 
@@ -258,7 +255,7 @@ export default function Page() {
               ))}
               {isLoading && (
                 <div className={styles.systemMsg}>
-                  <span className={styles.typing}>MindMate schreibt...</span>
+                  <span className={styles.typing}>MindMate is typing...</span>
                 </div>
               )}
               <div ref={endRef} />
@@ -267,7 +264,7 @@ export default function Page() {
             <form className={styles.inputRow} onSubmit={handleSubmit}>
               <Input
                 className={styles.input}
-                placeholder="Antwort hier eingeben..."
+                placeholder="Enter your answer here..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
@@ -281,7 +278,7 @@ export default function Page() {
                 className={styles.sendBtn} 
                 disabled={isLoading || !input.trim()}
               >
-                {isLoading ? '...' : 'Senden'}
+                {isLoading ? '...' : 'Send'}
               </Button>
             </form>
           </CardContent>
@@ -291,10 +288,10 @@ export default function Page() {
           <CardContent>
             <div className={styles.moodSection}>
               <p className={styles.moodLabel}>
-                Deine Stimmung: {currentMood} 
+                Your mood: {currentMood} 
                 {moodConfidence > 0 && (
                   <span className={styles.confidence}>
-                    ({Math.round(moodConfidence * 100)}% sicher)
+                    ({Math.round(moodConfidence * 100)}% sure)
                   </span>
                 )}
               </p>
@@ -320,16 +317,16 @@ export default function Page() {
               onClick={handleGeneratePlaylist}
               disabled={isGeneratingPlaylist}
             >
-              {isGeneratingPlaylist ? 'Erstelle Playlist...' : '🎵 Generiere Spotify Playlist'}
+              {isGeneratingPlaylist ? 'Creating playlist...' : '🎵 Generate Spotify Playlist'}
             </Button>
 
             {lastPlaylist && (
               <div className={styles.lastPlaylist}>
-                <h4>Zuletzt erstellt:</h4>
+                <h4>Last created:</h4>
                 <p>
                   <strong>{lastPlaylist.playlist_name}</strong>
                   <br />
-                  {lastPlaylist.tracks_added} Songs hinzugefügt
+                  {lastPlaylist.tracks_added} songs added
                   <br />
                   <a 
                     href={lastPlaylist.playlist_url} 
@@ -337,7 +334,7 @@ export default function Page() {
                     rel="noopener noreferrer"
                     className={styles.playlistLink}
                   >
-                    In Spotify öffnen →
+                    Open in Spotify →
                   </a>
                 </p>
               </div>

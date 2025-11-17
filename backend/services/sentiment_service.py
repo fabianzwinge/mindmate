@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class SentimentType(Enum):
-    POSITIVE = "gut"
-    NEGATIVE = "schlecht" 
+    POSITIVE = "good"
+    NEGATIVE = "bad" 
     NEUTRAL = "neutral"
 
 class SentimentService:

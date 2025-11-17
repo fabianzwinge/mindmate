@@ -6,36 +6,29 @@ import random
 load_dotenv()
 
 class AIService:
-    def __init__(self):
-        # Für jetzt nur lokale Antworten verwenden
-        self.model = None
-        
+
     async def generate_response(self, user_message: str, sentiment: str) -> str:
-        """
-        Generiert eine empathische Antwort basierend auf der erkannten Stimmung
-        """
-        
+       
         fallback_responses = {
-            "gut": [
-                "Das freut mich zu hören! Es ist schön, dass es dir gut geht.",
-                "Toll, dass du in guter Stimmung bist! Genieße diesen Moment.",
-                "Es ist wunderbar, wenn man sich gut fühlt. Was macht dich heute besonders glücklich?",
-                "Deine positive Energie ist spürbar! Was bereitet dir heute so viel Freude?"
+            "good": [
+            "I'm glad to hear that you're feeling good!",
+            "That's great! Enjoy this positive moment.",
+            "It's wonderful to feel well. What made you happy today?",
+            "Your positive energy is contagious! What's bringing you joy today?"
             ],
-          
-            "schlecht": [
-                "Es tut mir leid zu hören, dass es dir nicht gut geht. Ich bin für dich da.",
-                "Schwere Zeiten gehören zum Leben dazu. Du schaffst das, ich glaube an dich.",
-                "Manchmal ist es okay, sich schlecht zu fühlen. Möchtest du darüber reden?",
-                "Du bist stark, auch wenn es sich gerade nicht so anfühlt. Ich höre dir zu."
+            "bad": [
+            "I'm sorry to hear you're not feeling well. I'm here for you.",
+            "Tough times are part of life. You can get through this, I believe in you.",
+            "It's okay to feel down sometimes. Would you like to talk about it?",
+            "You're strong, even if it doesn't feel like it right now. I'm listening."
             ],
             "neutral": [
-                "Danke, dass du deine Gedanken mit mir teilst. Wie kann ich dir helfen?",
-                "Ich bin hier, um dir zuzuhören. Was beschäftigt dich heute?",
-                "Es ist schön, dass wir uns unterhalten. Was möchtest du besprechen?",
-                "Ich freue mich auf unser Gespräch. Erzähl mir, was dich bewegt."
+            "Thank you for sharing your thoughts. How can I help you?",
+            "I'm here to listen. What's on your mind today?",
+            "It's nice to have this conversation. What would you like to discuss?",
+            "I'm looking forward to our chat. Tell me what's on your mind."
             ]
         }
 
-        responses = fallback_responses.get(sentiment, fallback_responses["gut"]) #Placehoder - always positive for now
+        responses = fallback_responses.get(sentiment)
         return random.choice(responses)
