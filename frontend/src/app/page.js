@@ -321,22 +321,30 @@ export default function Page() {
             </Button>
 
             {lastPlaylist && (
-              <div className={styles.lastPlaylist}>
-                <h4>Last created:</h4>
-                <p>
-                  <strong>{lastPlaylist.playlist_name}</strong>
-                  <br />
-                  {lastPlaylist.tracks_added} songs added
-                  <br />
-                  <a 
-                    href={lastPlaylist.playlist_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className={styles.playlistLink}
-                  >
-                    Open in Spotify →
-                  </a>
-                </p>
+              <div className={styles.playlistCardWrapper}>
+                <Card className={styles.moodCard}>
+                  <CardContent>
+                    <div className={styles.playlistCard}>
+                      <img
+                        src="/mindmate.jpeg"
+                        alt="Playlist Cover"
+                        className={styles.playlistImage}
+                        onError={e => { e.target.src = "/mindmate.jpeg"; }}
+                      />
+                      <div className={styles.playlistInfo}>
+                        <h3 className={styles.playlistTitle}>{lastPlaylist.playlist_name}</h3>
+                        <p className={styles.playlistSongs}>{lastPlaylist.tracks_added} songs added</p>
+                        <Button
+                          type="button"
+                          onClick={() => window.open(lastPlaylist.playlist_url, '_blank', 'noopener,noreferrer')}
+                          className={styles.playlistOpenBtn}
+                        >
+                          Open in Spotify
+                      </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </CardContent>

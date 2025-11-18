@@ -311,3 +311,47 @@
     width: 100%;
   }
 }
+
+/* ...existing code... */
+
+.playlistCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.playlistCardWrapper {
+  margin-top: 16px; 
+  width: 100%;
+}
+
+.playlistImage {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.playlistInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.playlistTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.playlistSongs {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.playlistOpenBtn {
+  margin-top: 10px;
+  width: fit-content;
+}
