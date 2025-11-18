@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from pydantic import BaseModel
 from services.spotify_service import SpotifyService
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -109,8 +109,20 @@ async def generate_playlist(playlist_request: PlaylistRequest, request: Request)
         }
 
 @router.get("/callback")
-async def spotify_callback(code: str, request: Request):
+async def spotify_callback(request: Request,code: Optional[str] = None,
+    error: Optional[str] = None):
     try:
+        if code is None:
+            return HTMLResponse(content="""
+            <html>
+            <head><title>Authentifizierungsfehler</title></head>
+            <body>
+            <script>
+            window.close();
+            </script>
+            </body>
+            </html>
+            """)
         logger.info("Processing Spotify callback")
         
         tokens = spotify_service.exchange_code_for_token(code)
