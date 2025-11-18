@@ -238,7 +238,7 @@ export default function Page() {
           </div>
           <div className={styles.brandText}>
             <h1 className={styles.title}>MindMate</h1>
-            <p className={styles.subtitle}>Your AI Buddy</p>
+            <p className={styles.subtitle}>Your AI Buddy - by Fabian Joel Zwinge</p>
           </div>
         </header>
 
