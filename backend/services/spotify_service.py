@@ -201,8 +201,8 @@ class SpotifyService:
     
     def generate_playlist_from_mood(self, access_token: str, user_id: str, mood: str, tracks_count: int = 20) -> Dict:
         mood_queries = {
-            "gut": ["happy music", "upbeat songs", "positive vibes", "feel good", "energetic", "uplifting"],
-            "schlecht": ["sad songs", "emotional music", "melancholy", "healing music", "comfort songs", "chill"],
+            "good": ["happy music", "upbeat songs", "positive vibes", "feel good", "energetic", "uplifting"],
+            "bad": ["sad songs", "emotional music", "melancholy", "healing music", "comfort songs", "chill"],
             "neutral": ["chill music", "relaxed songs", "ambient", "calm music", "focus music", "background"]
         }
         
@@ -228,7 +228,7 @@ class SpotifyService:
                     break
         
         # Create playlist
-        mood_names = {"gut": "good", "schlecht": "bad", "neutral": "neutral"}
+        mood_names = {"good": "good", "bad": "bad", "neutral": "neutral"}
         playlist_name = f"MindMate {mood_names.get(mood, 'neutral').capitalize()} Mood"
         playlist_description = f"Your MindMate playlist for your {mood_names.get(mood, 'neutral')} mood."
         
