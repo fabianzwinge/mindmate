@@ -1,0 +1,25 @@
+name: Keep Render Services Online
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Frontend
+        run: |
+          echo "Pinging frontend..."
+          curl -s -o /dev/null -w "%{http_code}\n" https://mindmate-frontend-ns1v.onrender.com
+
+      - name: Ping Backend
+        run: |
+          echo "Pinging backend..."
+          curl -s -o /dev/null -w "%{http_code}\n" https://mindmate-483z.onrender.com
+
+      - name: Ping Model API
+        run: |
+          echo "Pinging model API..."
+          curl -s -o /dev/null -w "%{http_code}\n" https://mindmate-model.onrender.com
