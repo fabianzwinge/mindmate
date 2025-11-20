@@ -56,6 +56,9 @@ class AIService:
 
                 text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
                 text = re.sub(r"<.*?>", "", text)
+                escaped_user_content = re.escape(user_content)
+                text = re.sub(escaped_user_content, "", text)
+                text = re.sub(r"\s+", " ", text).strip()
 
                 return text.strip()
 
