@@ -1,9 +1,24 @@
 # 💬 MindMate
 
-**MindMate** ist dein persönlicher KI-Chatbot, der dich täglich fragt:  
-> *„Wie geht es dir heute?“*  
+**MindMate** is your personal AI companion that checks in with you every day and asks:
 
-Du kannst frei antworten, und die integrierte **Sentiment-Analyse** erkennt automatisch deine Stimmung. Außerdem generiert er dir noch Spotify Playlists die deine Stimmung wiederspiegeln. 
+> *“Hi there! How are you feeling today? What have you been up to?”*
 
-# Prerequisites
-* Python 13.3
+You can respond freely, and the integrated **sentiment analysis** automatically detects your mood.  
+Based on your emotional state, MindMate generates **Spotify playlists** that reflect how you're feeling.
+
+👉 **Try it out yourself:**  
+https://mindmate-frontend-ns1v.onrender.com
+
+---
+
+## 📝 Note
+
+- Only **English** is supported.  
+- The hosting is on **Render Free Plan**, which means that backend service and model api service may need a few moments to start up, as well as the frontend.
+
+---
+
+## 🛠️ Prerequisites for Local Development
+
+- **Python 13.3**
