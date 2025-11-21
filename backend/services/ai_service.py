@@ -7,6 +7,9 @@ import re
 load_dotenv()
 
 class AIService:
+    INITIAL_AI_MSG = "Hi there! How are you feeling today? What have you been up to?"
+    MAX_TOKENS_PROMPT = 1500
+    chat_history = []
 
     async def generate_response(self, user_message: str, sentiment: str) -> str:
         HF_TOKEN = os.environ.get("HF_API_KEY")
@@ -31,17 +34,34 @@ class AIService:
         You may use emojis appropriately to enhance friendliness. 
         Keep responses concise, coherent, and natural. 
         Always maintain a human-like, friendly tone.
-        IMPORTANT: Assume that the first user message you respond to is always an answer to this question: "Hi there! How are you feeling today? What have you been up to?" 
-        Your response should directly address this and be relevant. 
         Limit your reply to a maximum of 3 sentences.
+        Do not start your response with greetings like 'Hi!', 'Hello!', 'Hi there!' or similar.
         """
 
-        user_content = f"The user currently feels: {sentiment}. User message: \"{user_message}\""
+        if not AIService.chat_history:
+            AIService.chat_history.append({"role": "assistant", "content": self.INITIAL_AI_MSG})
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content}
-        ]
+        user_content = f"The user currently feels: {sentiment}. User message: \"{user_message}\""
+        AIService.chat_history.append({"role": "user", "content": user_content})
+
+        messages = [{"role": "system", "content": system_prompt}] + AIService.chat_history
+
+        def estimate_tokens(text):
+            return len(text) / 4
+        
+        history_text = system_prompt + " ".join(m["content"] for m in AIService.chat_history)
+        
+        while True:
+            total_tokens = estimate_tokens(system_prompt + " ".join(m["content"] for m in AIService.chat_history))
+            if total_tokens <= self.MAX_TOKENS_PROMPT:
+                break
+            for i, m in enumerate(AIService.chat_history):
+                if m["role"] == "user" and i > 0:
+                    AIService.chat_history.pop(i)
+                    if i < len(AIService.chat_history) and AIService.chat_history[i]["role"] == "assistant":
+                        AIService.chat_history.pop(i)
+                    break
+            messages = [{"role": "system", "content": system_prompt}] + AIService.chat_history
 
         try:
             completion = client.chat.completions.create(
@@ -53,36 +73,36 @@ class AIService:
 
             if completion.choices and len(completion.choices) > 0:
                 text = completion.choices[0].message.content.strip()
-
                 text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
                 text = re.sub(r"<.*?>", "", text)
                 escaped_user_content = re.escape(user_content)
                 text = re.sub(escaped_user_content, "", text)
+                text = re.sub(r"^\s*(Hi!|Hello!|Hey!|Hi there!)[,. ]*", "", text, flags=re.IGNORECASE)
                 text = re.sub(r"\s+", " ", text).strip()
-
-                return text.strip()
+                AIService.chat_history.append({"role": "assistant", "content": text})
+                return text
 
         except Exception as e:
             print("AI error:", e)
 
         fallback_responses = {
             "good": [
-            "I'm glad to hear that you're feeling good!",
-            "That's great! Enjoy this positive moment.",
-            "It's wonderful to feel well. What made you happy today?",
-            "Your positive energy is contagious! What's bringing you joy today?"
+                "I'm glad to hear that you're feeling good!",
+                "That's great! Enjoy this positive moment.",
+                "It's wonderful to feel well. What made you happy today?",
+                "Your positive energy is contagious! What's bringing you joy today?"
             ],
             "bad": [
-            "I'm sorry to hear you're not feeling well. I'm here for you.",
-            "Tough times are part of life. You can get through this, I believe in you.",
-            "It's okay to feel down sometimes. Would you like to talk about it?",
-            "You're strong, even if it doesn't feel like it right now. I'm listening."
+                "I'm sorry to hear you're not feeling well. I'm here for you.",
+                "Tough times are part of life. You can get through this, I believe in you.",
+                "It's okay to feel down sometimes. Would you like to talk about it?",
+                "You're strong, even if it doesn't feel like it right now. I'm listening."
             ],
             "neutral": [
-            "Thank you for sharing your thoughts. How can I help you?",
-            "I'm here to listen. What's on your mind today?",
-            "It's nice to have this conversation. What would you like to discuss?",
-            "I'm looking forward to our chat. Tell me what's on your mind."
+                "Thank you for sharing your thoughts. How can I help you?",
+                "I'm here to listen. What's on your mind today?",
+                "It's nice to have this conversation. What would you like to discuss?",
+                "I'm looking forward to our chat. Tell me what's on your mind."
             ]
         }
 
