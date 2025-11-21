@@ -12,6 +12,22 @@ https://mindmate-frontend-ns1v.onrender.com
 
 ---
 
+## 📸 How the app looks...
+
+Here are some screenshots from MindMate showing different chats and detected moods as well as a generated playlist:
+
+### 😄 Good Mood
+![Good Mood](resources/good_mood.png)  
+![Good Mood Playlist Generated](resources/good_mood_playlist_generated.png)  
+![Spotify Playlist](resources/spotify_playlist.png)
+
+### 😐 Neutral Mood
+![Neutral Mood](resources/neutral_mood.png)
+
+### 😔 Bad Mood
+![Bad Mood](resources/bad_mood.png)
+
+--- 
 ## 📝 Note
 
 - Only **English** is supported.  
