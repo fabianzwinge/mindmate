@@ -37,4 +37,4 @@ Here are some screenshots from MindMate showing different chats and detected moo
 
 ## 🛠️ Prerequisites for Local Development
 
-- **Python 13.3**
+- **Python 3.13+**
