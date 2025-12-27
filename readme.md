@@ -31,7 +31,7 @@ Here are some screenshots from MindMate showing different chats and detected moo
 ## 📝 Note
 
 - Only **English** is supported.  
-- The hosting is on **Render Free Plan**, which means that backend service and model api service may need a few moments to start up, as well as the frontend.
+- The application is hosted on the **Render Free Plan**. Once the allocated free usage hours are exhausted, the backend service, model API service, and frontend may be suspended until the end of the month.
 
 ---
 
