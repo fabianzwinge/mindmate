@@ -7,9 +7,6 @@
 You can respond freely, and the integrated **sentiment analysis** automatically detects your mood.  
 Based on your emotional state, MindMate generates **Spotify playlists** that reflect how you're feeling.
 
-👉 **Try it out yourself:**  
-https://mindmate-frontend-ns1v.onrender.com
-
 ---
 
 ## 📸 How the app looks...
@@ -48,14 +45,6 @@ If the message expresses a **neutral emotional state**, MindMate classifies the 
 When a **negative or emotionally difficult message** is detected, MindMate recognizes a bad mood and responds with empathy.
 
 ![Bad Mood](resources/bad_mood.png)
-
----
-
-## 📝 Note
-
-- Only **English** is supported.  
-- The application is hosted on the **Render Free Plan**. Once the allocated free usage hours are exhausted, the backend service, model API service, and frontend may be suspended until the end of the month.
-
 ---
 
 ## 🛠️ Prerequisites for Local Development
